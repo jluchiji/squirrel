@@ -6,7 +6,7 @@ DEBUG   = 3
 
 OUT     = squirrel
 CFLAGS  = -fPIC -g
-LDFLAGS = -lpthread
+LDFLAGS = -pthread
 
 CXX     = g++
 ECHO    = /bin/echo

